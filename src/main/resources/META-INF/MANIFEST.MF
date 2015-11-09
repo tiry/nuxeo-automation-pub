@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-SymbolicName: org.nuxeo.automation.publish
+Bundle-Name: org.nuxeo.automation.publish
+Bundle-ClassPath: .
+Bundle-ActivationPolicy: lazy
+Bundle-ManifestVersion: 2
+Bundle-Vendor: Nuxeo
+Nuxeo-Component: OSGI-INF/core-contribs.xml,
+ OSGI-INF/operations-contrib.xml

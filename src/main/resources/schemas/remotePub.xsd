@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:nxs="http://www.nuxeo.org/ecm/schemas/video"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://www.nuxeo.org/ecm/schemas/video">
+
+  <xs:include schemaLocation="core-types.xsd" />
+
+  <xs:complexType name="pubEntry">
+    <xs:sequence>
+    
+      <xs:element name="sourceURL" type="xs:string" />       
+      <xs:element name="sourceRepository" type="xs:string" /> 
+      <xs:element name="sourceUID" type="xs:string" /> 
+      
+      <xs:element name="targetURL" type="xs:string" />       
+      <xs:element name="targetRepository" type="xs:string" /> 
+      <xs:element name="targetPath" type="xs:string" /> 
+      <xs:element name="targetUID" type="xs:string" /> 
+      
+      <xs:element name="operation" type="xs:string" />       
+      <xs:element name="sourceUser" type="xs:string" />       
+      <xs:element name="remoteUser" type="xs:string" />       
+      <xs:element name="pubDate" type="xs:date" /> 
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="pubEntries">
+    <xs:sequence>
+      <xs:element maxOccurs="unbounded" minOccurs="0"
+       name="streamItem" type="nxs:pubEntry"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="pubEntries" type="nxs:pubEntries" />
+  
+</xs:schema>

@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<component name="org.nuxeo.ecm.automation.pub.contrib"
+  version="1.0">
+
+  <documentation>@author Thierry Delprat</documentation>
+
+  <extension target="org.nuxeo.ecm.core.operation.OperationServiceComponent"
+    point="operations">
+
+    <operation
+      class="org.nuxeo.automation.publish.CreatePublishedDocument" />
+
+    <operation
+      class="org.nuxeo.automation.publish.PublishToRemote" />
+
+  </extension>
+
+</component>
