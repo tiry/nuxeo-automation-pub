@@ -107,10 +107,9 @@ public class PublishToRemote {
         NuxeoArchiveWriter writer = new NuxeoArchiveWriter(tmp);
         exportPipe.setWriter(writer);
         ctx.addCleanupHandler(new CleanupHandler() {
-
             @Override
             public void cleanup() {
-                // tmp.delete();
+                tmp.delete();
             }
         });
 

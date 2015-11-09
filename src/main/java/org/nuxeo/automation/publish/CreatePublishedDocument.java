@@ -1,6 +1,5 @@
 package org.nuxeo.automation.publish;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -79,11 +78,7 @@ public class CreatePublishedDocument {
 
             DocumentPipe pipe = new DocumentPipeImpl();
 
-            File tmp = File.createTempFile("nuxeo-pub-import-", ".zip");
-
-            source.transferTo(tmp);
-
-            DocumentReader reader = new NuxeoArchiveReader(tmp /* source.getStream() */);
+            DocumentReader reader = new NuxeoArchiveReader(source.getStream());
             pipe.setReader(reader);
             DocumentWriter writer = new DocumentModelWriter(session, containerDoc.getPathAsString());
             pipe.setWriter(writer);

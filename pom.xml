@@ -5,13 +5,13 @@
   <parent>
     <groupId>org.nuxeo.ecm.platform</groupId>
     <artifactId>nuxeo-features-parent</artifactId>
-    <version>7.4</version>
+    <version>7.10-SNAPSHOT</version>
   </parent>
 
   <groupId>org.nuxeo.addons</groupId>
   <artifactId>nuxeo-automation-publish</artifactId>
   <name>nuxeo-automation-publish</name>
-  <version>7.4-SNAPSHOT</version>
+  <version>7.10-SNAPSHOT</version>
   <description>
 
   </description>
@@ -34,12 +34,7 @@
     </dependency>
     <dependency>
       <groupId>org.nuxeo.ecm.automation</groupId>
-      <artifactId>nuxeo-automation-features</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.nuxeo.ecm.automation</groupId>
-      <artifactId>nuxeo-automation-test</artifactId>
-      <scope>test</scope>
+      <artifactId>nuxeo-automation-client</artifactId>
     </dependency>
     <dependency>
       <groupId>org.nuxeo.ecm.core</groupId>
@@ -53,11 +48,59 @@
       <groupId>org.nuxeo.ecm.core</groupId>
       <artifactId>nuxeo-core-schema</artifactId>
     </dependency>
+
     <dependency>
-        <groupId>javax.servlet</groupId>
-        <artifactId>servlet-api</artifactId>
-        <scope>provided</scope>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>javax.transaction</groupId>
+      <artifactId>jta</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.nuxeo.runtime</groupId>
+      <artifactId>nuxeo-runtime-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.nuxeo.runtime</groupId>
+      <artifactId>nuxeo-runtime-osgi</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.nuxeo.runtime</groupId>
+      <artifactId>nuxeo-runtime-datasource</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency> 
+     <groupId>org.nuxeo.ecm.automation</groupId>
+      <artifactId>nuxeo-automation-server</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.nuxeo.ecm.core</groupId>
+      <artifactId>nuxeo-core-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.nuxeo.ecm.automation</groupId>
+      <artifactId>nuxeo-automation-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.nuxeo.ecm.core</groupId>
+      <artifactId>nuxeo-core-storage-sql-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+<!--
+    <dependency>
+      <groupId>org.nuxeo.runtime</groupId>
+      <artifactId>nuxeo-runtime-jtajca</artifactId>
+      <scope>test</scope>
+    </dependency>
+-->
 
   </dependencies>
 

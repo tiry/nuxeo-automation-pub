@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.nuxeo.automation.publish.PublishToRemote;
@@ -19,6 +18,7 @@ import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.DocumentModelList;
 import org.nuxeo.ecm.core.api.PathRef;
 import org.nuxeo.ecm.core.api.impl.blob.StringBlob;
+import org.nuxeo.ecm.core.test.TransactionalFeature;
 import org.nuxeo.runtime.test.runner.Deploy;
 import org.nuxeo.runtime.test.runner.Features;
 import org.nuxeo.runtime.test.runner.FeaturesRunner;
@@ -29,8 +29,8 @@ import com.google.inject.Inject;
 
 @Jetty(port = 18080)
 @RunWith(FeaturesRunner.class)
-@Deploy({"org.nuxeo.automation.publish"})
-@Features({ EmbeddedAutomationServerFeature.class })
+@Deploy({ "org.nuxeo.automation.publish" })
+@Features({ TransactionalFeature.class, EmbeddedAutomationServerFeature.class })
 public class TestRemotePub {
 
     @Inject
@@ -40,9 +40,10 @@ public class TestRemotePub {
     AutomationService as;
 
     DocumentModel sourceFolder;
-    DocumentModel sourceDoc;
-    DocumentModel destFolder;
 
+    DocumentModel sourceDoc;
+
+    DocumentModel destFolder;
 
     protected void dump(StringBuffer sb, DocumentModelList alldocs) {
         for (DocumentModel doc : alldocs) {
@@ -54,7 +55,7 @@ public class TestRemotePub {
             sb.append(" - ");
             sb.append(doc.getTitle());
             sb.append(" - ");
-            sb.append(doc.isVersion()?"version":"doc");
+            sb.append(doc.isVersion() ? "version" : "doc");
             sb.append(" - ");
             sb.append(doc.getVersionLabel());
             sb.append("\n");
@@ -64,11 +65,11 @@ public class TestRemotePub {
     protected void dump() {
         DocumentModelList docs = session.query("select * from Document order by ecm:path");
         StringBuffer sb = new StringBuffer();
-        dump(sb,docs);
+        dump(sb, docs);
         System.out.println(sb.toString());
     }
 
-    @Before
+    // @Before
     public void initTree() throws Exception {
 
         sourceFolder = session.createDocumentModel("/", "sourceFolder", "Folder");
@@ -94,6 +95,8 @@ public class TestRemotePub {
     @Test
     public void shouldPublishViaHttp() throws Exception {
 
+        initTree();
+
         OperationContext oc = new OperationContext(session);
         oc.setInput(sourceDoc);
 
@@ -107,7 +110,6 @@ public class TestRemotePub {
         params.put("targetName", "pubDoc");
         params.put("snapshotSource", true);
 
-
         // run initial publication
         DocumentModel localDoc = (DocumentModel) as.run(oc, PublishToRemote.ID, params);
         Assert.assertNotNull(localDoc);
@@ -115,8 +117,7 @@ public class TestRemotePub {
         DocumentModel pubDoc = session.getDocument(new PathRef("/destFolder/pubDoc"));
         Assert.assertNotNull(pubDoc);
 
-
-        dump();
+        // dump();
 
         // get publication log
         List<Map<String, Serializable>> props = (List<Map<String, Serializable>>) localDoc.getPropertyValue("rpub:pubEntries");
@@ -145,9 +146,8 @@ public class TestRemotePub {
 
         // check published document
         Assert.assertEquals("Test Document", pubDoc.getTitle());
-        Assert.assertEquals("fake.txt", ((Blob)pubDoc.getPropertyValue("file:content")).getFilename());
-        Assert.assertEquals("FakeContent", ((Blob)pubDoc.getPropertyValue("file:content")).getString());
-
+        Assert.assertEquals("fake.txt", ((Blob) pubDoc.getPropertyValue("file:content")).getFilename());
+        Assert.assertEquals("FakeContent", ((Blob) pubDoc.getPropertyValue("file:content")).getString());
 
         sourceDoc.setPropertyValue("dc:title", "Test Document Modified");
         sourceDoc = session.saveDocument(sourceDoc);
@@ -169,7 +169,6 @@ public class TestRemotePub {
 
         List<DocumentModel> targetVersions = session.getVersions(pubDoc.getRef());
         Assert.assertEquals(1, targetVersions.size());
-
 
     }
 }
