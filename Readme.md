@@ -37,5 +37,11 @@ Both the Source Document and the Target Document hold a `RemotePub` that stores 
 
 The "Server endpoint" provided by `Remote.CreatePublishedDocument` will try to do a simple resolution of the path provided to get the target container where the document must be published.
 
-You can provide an additional `containerResolver` parameter that should be the name of a Chain or Operation that will be used to do the String => Container document resolution.
-   
+You can provide an additional `containerResolver` parameter that should be the name of a Chain or Operation that will be used to do find or create the container.
+
+The target Operation should :
+
+ - accept a DocumentModel as input: the DocumentModel representing the document to publish 
+ - use the `containerPath` context entry to retrieve the value of the `containerResolver` parameter
+ - return a DocumentModel
+    

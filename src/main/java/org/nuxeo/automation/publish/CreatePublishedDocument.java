@@ -1,5 +1,6 @@
 package org.nuxeo.automation.publish;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.dom4j.Element;
 import org.nuxeo.common.utils.Path;
 import org.nuxeo.ecm.automation.AutomationService;
+import org.nuxeo.ecm.automation.CleanupHandler;
 import org.nuxeo.ecm.automation.OperationContext;
 import org.nuxeo.ecm.automation.core.Constants;
 import org.nuxeo.ecm.automation.core.annotations.Context;
@@ -21,17 +23,23 @@ import org.nuxeo.ecm.automation.core.annotations.OperationMethod;
 import org.nuxeo.ecm.automation.core.annotations.Param;
 import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.CoreSession;
+import org.nuxeo.ecm.core.api.DocumentLocation;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.DocumentRef;
 import org.nuxeo.ecm.core.api.IdRef;
 import org.nuxeo.ecm.core.api.PathRef;
 import org.nuxeo.ecm.core.api.VersioningOption;
+import org.nuxeo.ecm.core.api.impl.DocumentModelImpl;
+import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
 import org.nuxeo.ecm.core.io.DocumentPipe;
 import org.nuxeo.ecm.core.io.DocumentReader;
 import org.nuxeo.ecm.core.io.DocumentTransformer;
+import org.nuxeo.ecm.core.io.DocumentTranslationMap;
 import org.nuxeo.ecm.core.io.DocumentWriter;
+import org.nuxeo.ecm.core.io.ExportConstants;
 import org.nuxeo.ecm.core.io.ExportedDocument;
 import org.nuxeo.ecm.core.io.impl.DocumentPipeImpl;
+import org.nuxeo.ecm.core.io.impl.DocumentTranslationMapImpl;
 import org.nuxeo.ecm.core.io.impl.plugins.DocumentModelWriter;
 import org.nuxeo.ecm.core.io.impl.plugins.NuxeoArchiveReader;
 import org.nuxeo.ecm.platform.web.common.vh.VirtualHostHelper;
@@ -58,7 +66,59 @@ public class CreatePublishedDocument {
     public DocumentModel publish(Blob source) throws Exception {
 
         CoreSession session = ctx.getCoreSession();
-        DocumentModel containerDoc = resolveContainer(session, container);
+
+        DocumentPipe pipe = new DocumentPipeImpl();
+
+        DocumentModel containerDoc = null;
+        if (resolver!=null) {
+            // need to get input document for the resolver !
+
+            // save the blob for being able to read it twice
+            final File tmp = File.createTempFile("nuxeo-pub-import-", ".zip");
+            source.transferTo(tmp);
+
+            source = new FileBlob(tmp);
+
+            ctx.addCleanupHandler(new CleanupHandler() {
+                @Override
+                public void cleanup() {
+                    tmp.delete();
+                }
+            });
+
+            DocumentReader reader = new NuxeoArchiveReader(tmp);
+            pipe.setReader(reader);
+            InMemoryDocumentModelWriter writer = new InMemoryDocumentModelWriter(session, "/");
+            pipe.setWriter(writer);
+
+            pipe.addTransformer(new DocumentTransformer() {
+                @Override
+                public boolean transform(ExportedDocument xDoc) throws IOException {
+                    Element root = xDoc.getDocument().getRootElement();
+                    Element sys = root.element("system");
+                    for (Object f : sys.elements("facet")) {
+                        if ("Immutable".equals(((Element) f).getTextTrim())) {
+                            ((Element) f).detach();
+                        }
+                    }
+                    return true;
+                }
+            });
+
+            pipe.run();
+
+            DocumentModel sourceDoc = writer.getDoc();
+
+            AutomationService as = Framework.getService(AutomationService.class);
+            OperationContext c = new OperationContext(ctx.getCoreSession(), ctx.getVars());
+            c.setInput(sourceDoc);
+            c.getVars().put("containerPath", container);
+            containerDoc =  (DocumentModel) as.run(c, resolver);
+        }
+        else {
+            containerDoc = resolveContainer(session, container);
+        }
+
         DocumentModel published = null;
 
         if (containerDoc != null) {
@@ -76,8 +136,7 @@ public class CreatePublishedDocument {
                 session.checkIn(previous.getRef(), VersioningOption.MINOR, "Version before publish");
             }
 
-            DocumentPipe pipe = new DocumentPipeImpl();
-
+            pipe = new DocumentPipeImpl();
             DocumentReader reader = new NuxeoArchiveReader(source.getStream());
             pipe.setReader(reader);
             DocumentWriter writer = new DocumentModelWriter(session, containerDoc.getPathAsString());
@@ -147,14 +206,48 @@ public class CreatePublishedDocument {
 
     }
 
-    protected DocumentModel resolveContainer(CoreSession session, String container) throws Exception {
+    protected static class InMemoryDocumentModelWriter extends DocumentModelWriter {
 
-        if (resolver != null) {
-            AutomationService as = Framework.getService(AutomationService.class);
-            OperationContext c = new OperationContext(ctx.getCoreSession(), ctx.getVars());
-            c.setInput(container);
-            return (DocumentModel) as.run(ctx, resolver);
+        protected DocumentModel doc=null;
+
+        public InMemoryDocumentModelWriter(CoreSession session, String parentPath) {
+            super(session, parentPath);
         }
+
+        @Override
+        public DocumentTranslationMap write(ExportedDocument xdoc) throws IOException {
+
+            Path toPath = xdoc.getPath();
+            toPath = root.append(toPath);
+
+            Path parentPath = toPath.removeLastSegments(1);
+            String name = toPath.lastSegment();
+
+            doc = new DocumentModelImpl(parentPath.toString(), name, xdoc.getType());
+
+            // set lifecycle state at creation
+            Element system = xdoc.getDocument().getRootElement().element(ExportConstants.SYSTEM_TAG);
+            String lifeCycleState = system.element(ExportConstants.LIFECYCLE_STATE_TAG).getText();
+            doc.putContextData("initialLifecycleState", lifeCycleState);
+
+            // loadFacets before schemas so that additional schemas are not skipped
+            loadFacetsInfo(doc, xdoc.getDocument());
+
+            // then load schemas data
+            loadSchemas(xdoc, doc, xdoc.getDocument());
+
+            DocumentLocation source = xdoc.getSourceLocation();
+            return new DocumentTranslationMapImpl(source.getServerName(), doc.getRepositoryName());
+
+        }
+
+        public DocumentModel getDoc() {
+            return doc;
+        }
+
+    }
+
+    protected DocumentModel resolveContainer(CoreSession session, String container) throws Exception {
 
         DocumentRef ref;
 
