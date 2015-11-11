@@ -70,7 +70,7 @@ public class CreatePublishedDocument {
         DocumentPipe pipe = new DocumentPipeImpl();
 
         DocumentModel containerDoc = null;
-        if (resolver!=null) {
+        if (resolver != null && !resolver.isEmpty()) {
             // need to get input document for the resolver !
 
             // save the blob for being able to read it twice
@@ -113,9 +113,8 @@ public class CreatePublishedDocument {
             OperationContext c = new OperationContext(ctx.getCoreSession(), ctx.getVars());
             c.setInput(sourceDoc);
             c.getVars().put("containerPath", container);
-            containerDoc =  (DocumentModel) as.run(c, resolver);
-        }
-        else {
+            containerDoc = (DocumentModel) as.run(c, resolver);
+        } else {
             containerDoc = resolveContainer(session, container);
         }
 
@@ -208,7 +207,7 @@ public class CreatePublishedDocument {
 
     protected static class InMemoryDocumentModelWriter extends DocumentModelWriter {
 
-        protected DocumentModel doc=null;
+        protected DocumentModel doc = null;
 
         public InMemoryDocumentModelWriter(CoreSession session, String parentPath) {
             super(session, parentPath);

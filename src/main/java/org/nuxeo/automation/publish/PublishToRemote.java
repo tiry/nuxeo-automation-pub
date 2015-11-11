@@ -87,7 +87,9 @@ public class PublishToRemote {
 
         OperationRequest request = remoteSession.newRequest(CreatePublishedDocument.ID);
 
-        request.setHeader("X-NXRepository", remoteRepository);
+        if (remoteRepository != null && !remoteRepository.isEmpty()) {
+            request.setHeader("X-NXRepository", remoteRepository);
+        }
 
         if (targetName == null || targetName.isEmpty()) {
             targetName = liveDoc.getName();
@@ -95,7 +97,7 @@ public class PublishToRemote {
 
         request.set("container", targetContainerPath);
         request.set("name", targetName);
-        if (containerResolver != null) {
+        if (containerResolver != null && !containerResolver.isEmpty()) {
             request.set("resolver", containerResolver);
         }
 
@@ -134,6 +136,8 @@ public class PublishToRemote {
         }
 
         liveDoc.setPropertyValue("rpub:pubEntries", (Serializable) entries);
+
+        liveDoc = session.saveDocument(liveDoc);
 
         return liveDoc;
     }
